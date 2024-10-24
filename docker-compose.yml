@@ -10,8 +10,8 @@ services:
       - stats-db
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats
-      SPRING_DATASOURCE_USERNAME: ycse2
-      SPRING_DATASOURCE_PASSWORD: qwerty12341
+      SPRING_DATASOURCE_USERNAME: stats
+      SPRING_DATASOURCE_PASSWORD: stats
 
   stats-db:
     image: postgres:16.3
@@ -20,10 +20,10 @@ services:
       - "6541:5432"
     environment:
       POSTGRES_DB: stats
-      POSTGRES_USER: ycse2
-      POSTGRES_PASSWORD: qwerty12341
+      POSTGRES_USER: stats
+      POSTGRES_PASSWORD: stats
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -q -d $POSTGRES_DB -U $POSTGRES_USER" ]
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       interval: 5s
       timeout: 5s
       retries: 10
@@ -38,20 +38,20 @@ services:
       - stats-server
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://ewm-db:5432/mainservice
-      SPRING_DATASOURCE_USERNAME: ycse2
-      SPRING_DATASOURCE_PASSWORD: qwerty12341
+      SPRING_DATASOURCE_USERNAME: mainservice
+      SPRING_DATASOURCE_PASSWORD: mainservice
 
   ewm-db:
     image: postgres:16.3
     container_name: ewm_db
     ports:
-      - "6542:5432"
+      - "7542:5432"
     environment:
       POSTGRES_DB: mainservice
-      POSTGRES_USER: ycse2
-      POSTGRES_PASSWORD: qwerty12341
+      POSTGRES_USER: mainservice
+      POSTGRES_PASSWORD: mainservice
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -q -d $POSTGRES_DB -U $POSTGRES_USER" ]
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       interval: 5s
       timeout: 5s
       retries: 10
