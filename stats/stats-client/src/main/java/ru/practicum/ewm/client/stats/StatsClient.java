@@ -6,6 +6,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.ewm.dto.stats.EndpointHitDto;
 
 import java.util.List;
@@ -31,14 +32,31 @@ public class StatsClient {
                     "uris", uris,
                     "unique", unique
             );
-            return get("/stats?start={start}&end={end}&uris={uris}&unique={unique}", ipResource, parameters);
+
+            String uri = UriComponentsBuilder.fromPath("/stats")
+                    .queryParam("start", start)
+                    .queryParam("end", end)
+                    .queryParam("uris", String.join(",", uris))
+                    .queryParam("unique", unique)
+                    .build()
+                    .toUriString();
+
+            return get(uri, ipResource, parameters);
         } else {
             parameters = Map.of(
                     "start", start,
                     "end", end,
                     "unique", unique
             );
-            return get("/stats?start={start}&end={end}&unique={unique}", ipResource, parameters);
+
+            String uri = UriComponentsBuilder.fromPath("/stats")
+                    .queryParam("start", start)
+                    .queryParam("end", end)
+                    .queryParam("unique", unique)
+                    .build()
+                    .toUriString();
+
+            return get(uri, ipResource, parameters);
         }
     }
 
