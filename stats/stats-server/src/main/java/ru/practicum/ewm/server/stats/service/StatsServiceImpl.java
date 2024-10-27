@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.stats.EndpointHitDto;
 import ru.practicum.ewm.dto.stats.ViewStats;
 import ru.practicum.ewm.server.stats.StatsMapper;
+import ru.practicum.ewm.server.stats.exception.InvalidRequestException;
 import ru.practicum.ewm.server.stats.model.EndpointHit;
 import ru.practicum.ewm.server.stats.repository.StatsRepository;
 
@@ -30,6 +31,16 @@ public class StatsServiceImpl implements StatsService {
     @Transactional(readOnly = true)
     @Override
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, String[] uris, boolean unique) {
+
+        if (start == null) {
+            throw new InvalidRequestException("Start date must not be null");
+        }
+        if (end == null) {
+            throw new InvalidRequestException("End date must not be null");
+        }
+        if (start.isAfter(end)) {
+            throw new InvalidRequestException("Start date must be before or equal to end date");
+        }
 
         List<ViewStats> list;
 
