@@ -37,7 +37,16 @@ public class EventPublicController {
                                                            @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                        @Positive
                                                            @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        return eventService.getEventsAndStatsPublic(request, text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        return eventService.getEventsAndStatsPublic(request,
+                text,
+                categories,
+                paid,
+                rangeStart,
+                rangeEnd,
+                onlyAvailable,
+                sort,
+                from,
+                size);
     }
 
     @GetMapping("/{Id}")

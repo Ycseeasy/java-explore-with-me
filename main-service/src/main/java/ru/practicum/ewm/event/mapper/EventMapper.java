@@ -30,8 +30,9 @@ public class EventMapper {
                 .participantLimit(event.getParticipantLimit())
                 .publishedOn(event.getPublishedOn() == null ? null : event.getPublishedOn().format(DATE_TIME_FORMATTER))
                 .requestModeration(event.getRequestModeration())
-                .state(event.getState() == null ? null : event.getState().toString()).
-                title(event.getTitle()).views(event.getViews()).build();
+                .state(event.getState() == null ? null : event.getState().toString())
+                .title(event.getTitle()).views(event.getViews())
+                .build();
     }
 
     public static EventShortDto toEventShortDto(Event event) {
