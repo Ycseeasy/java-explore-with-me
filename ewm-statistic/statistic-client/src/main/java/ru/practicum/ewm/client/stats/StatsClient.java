@@ -48,7 +48,7 @@ public class StatsClient extends BaseClient {
             uri = UriComponentsBuilder.fromPath("/stats")
                     .queryParam("start", start)
                     .queryParam("end", end)
-                    .queryParam("uris", String.join(",", uris))
+                    .queryParam("uris", uris)
                     .queryParam("unique", unique)
                     .build()
                     .toUriString();
