@@ -1,6 +1,5 @@
 package ru.practicum.ewm.controllers.priv;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -23,23 +22,20 @@ public class UserPrivateController {
     private final ParticipationService participationService;
 
     @GetMapping
-    public List<ParticipationRequestDto> getParticipationRequestPrivate(HttpServletRequest request, @NotNull @Positive @PathVariable Long userId) {
-        log.info("Запрос к конечной точке получен: '{} {}', строка параметров запроса: '{}'", request.getMethod(), request.getRequestURI(), request.getQueryString());
+    public List<ParticipationRequestDto> getParticipationRequestPrivate(@NotNull @Positive @PathVariable Long userId) {
         return participationService.getParticipationRequestPrivate(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ParticipationRequestDto addParticipationRequestPrivate(HttpServletRequest request, @Positive @PathVariable(required = false) Long userId, @Positive @RequestParam(required = false) Long eventId) {
-        log.info("Запрос к конечной точке получен: '{} {}', строка параметров запроса: '{}'", request.getMethod(), request.getRequestURI(), request.getQueryString());
+    public ParticipationRequestDto addParticipationRequestPrivate(@Positive @PathVariable(required = false) Long userId, @Positive @RequestParam(required = false) Long eventId) {
 
         return participationService.addParticipationRequestPrivate(userId, eventId);
     }
 
 
     @PatchMapping("/{requestId}/cancel")
-    public ParticipationRequestDto updateRejectedParticipationRequestPrivate(HttpServletRequest request, @NotNull @Positive @PathVariable Long userId, @NotNull @Positive @PathVariable(required = true, name = "requestId") Long requestId) {
-        log.info("Запрос к конечной точке получен: '{} {}', строка параметров запроса: '{}'", request.getMethod(), request.getRequestURI(), request.getQueryString());
+    public ParticipationRequestDto updateRejectedParticipationRequestPrivate(@NotNull @Positive @PathVariable Long userId, @NotNull @Positive @PathVariable(required = true, name = "requestId") Long requestId) {
         return participationService.updateRejectedParticipationRequestPrivate(userId, requestId);
     }
 }

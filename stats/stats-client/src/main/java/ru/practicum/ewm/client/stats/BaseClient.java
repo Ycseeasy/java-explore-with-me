@@ -40,11 +40,15 @@ public class BaseClient {
         return makeAndSendRequest(HttpMethod.GET, path, parameters, null);
     }
 
-    protected <F> ResponseEntity<F> getList(String uri, @Nullable Map<String, Object> parameters, ParameterizedTypeReference<F> type) {
+    protected <F> ResponseEntity<F> getList(String uri, @Nullable Map<String, Object> parameters,
+                                            ParameterizedTypeReference<F> type) {
         return sendRequestType(uri, HttpMethod.GET, null, parameters, type);
     }
 
-    private <T, F> ResponseEntity<F> sendRequestType(String path, HttpMethod method, @Nullable T body, @Nullable Map<String, Object> parameters, ParameterizedTypeReference<F> type) {
+    private <T, F> ResponseEntity<F> sendRequestType(String path, HttpMethod method,
+                                                     @Nullable T body,
+                                                     @Nullable Map<String, Object> parameters,
+                                                     ParameterizedTypeReference<F> type) {
         HttpEntity<T> requestEntity = new HttpEntity<>(body, defaultHeaders());
 
         ResponseEntity<F> statsServerResponse;
@@ -68,7 +72,10 @@ public class BaseClient {
         return makeAndSendRequest(HttpMethod.POST, path, parameters, body);
     }
 
-    private <T> ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path, @Nullable Map<String, Object> parameters, @Nullable T body) {
+    private <T> ResponseEntity<Object> makeAndSendRequest(HttpMethod method,
+                                                          String path,
+                                                          @Nullable Map<String, Object> parameters,
+                                                          @Nullable T body) {
         HttpEntity<T> requestEntity = new HttpEntity<>(body, defaultHeaders());
 
         ResponseEntity<Object> statsServerResponse;

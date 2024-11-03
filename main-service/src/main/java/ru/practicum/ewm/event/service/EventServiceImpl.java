@@ -619,14 +619,16 @@ public class EventServiceImpl implements EventService {
         List<String> uris = Collections.singletonList(request.getRequestURI());
 
         ResponseEntity<List<ViewStats>> response = statsClient.getStats(timeStart, timeNow, uris, true);
-
         List<ViewStats> resp = response.hasBody() ? response.getBody() : Collections.emptyList();
 
         if (resp.isEmpty()) {
-            event.setViews(event.getViews() + 1);
-            eventRepository.save(event);
+            if (event.getViews() == null || event.getViews() == 0) {
+                event.setViews(1L);
+                eventRepository.save(event);
+        } else {
+                event.setViews((long) resp.size());
+            }
         }
-
         EndpointHitDto endpointHitDto = EndpointHitDto.builder()
                 .id(null)
                 .app("main-service")

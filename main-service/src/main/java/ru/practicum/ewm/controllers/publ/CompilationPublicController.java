@@ -29,7 +29,7 @@ public class CompilationPublicController {
     }
 
     @GetMapping("/{compId}")
-    public CompilationDto getCompilationByIdPublic(HttpServletRequest request, @Positive @PathVariable Long compId) {
+    public CompilationDto getCompilationByIdPublic(@Positive @PathVariable Long compId) {
         return compilationService.getCompilationByIdPublic(compId);
     }
 

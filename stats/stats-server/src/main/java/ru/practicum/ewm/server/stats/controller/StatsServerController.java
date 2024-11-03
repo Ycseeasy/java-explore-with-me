@@ -19,8 +19,7 @@ public class StatsServerController {
     private final StatsService statsService;
 
     @PostMapping("/hit")
-    public EndpointHitDto addUser(
-            @RequestBody EndpointHitDto endpointHitDto) {
+    public EndpointHitDto addUser(@RequestBody EndpointHitDto endpointHitDto) {
         log.info("Creating request {}, app={}, ip={}", endpointHitDto.getApp(), endpointHitDto.getIp());
         return statsService.addRequest(endpointHitDto);
     }
