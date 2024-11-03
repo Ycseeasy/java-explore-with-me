@@ -7,11 +7,11 @@
 
     <parent>
         <groupId>ru.practicum</groupId>
-        <artifactId>stats</artifactId>
+        <artifactId>ewm-statistic</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stats-dto</artifactId>
+    <artifactId>statistic-dto</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
