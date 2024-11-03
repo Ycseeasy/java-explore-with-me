@@ -9,7 +9,7 @@ public class NewEventDto {
 
     @NotNull
     @NotBlank
-    @Size(min = 20, max = 2000)
+    @Size(min = 20, max = 2001)
     private String annotation;
 
     @Positive
@@ -17,7 +17,7 @@ public class NewEventDto {
 
     @NotNull
     @NotBlank
-    @Size(min = 20, max = 2000)
+    @Size(min = 20, max = 2001)
     private String description;
 
     @NotNull

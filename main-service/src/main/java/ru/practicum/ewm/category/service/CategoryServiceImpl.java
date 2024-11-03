@@ -30,7 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     @Override
     public CategoryDto addCategoryAdmin(NewCategoryDto newCategoryDto) {
-        if (categoryRepository.findByName(newCategoryDto.getName()) != null) {
+        if (categoryRepository.existsByName(newCategoryDto.getName())) {
             throw new DuplicateNameException("Category name " + newCategoryDto.getName()
                     + "already exists in the system.");
         }
@@ -43,7 +43,11 @@ public class CategoryServiceImpl implements CategoryService {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException("Category with ID " + catId + " not found");
         }
-
+        if (categoryRepository.existsByName(newCategoryDto.getName())
+                && !categoryRepository.getByName(newCategoryDto.getName()).getId().equals(catId)) {
+            throw new DuplicateNameException("Category name " + newCategoryDto.getName()
+                    + "already exists in the system.");
+        }
         Category newCategory = CategoryMapper.toCategory(newCategoryDto);
         newCategory.setId(catId);
         return CategoryMapper.toCategoryDto(categoryRepository.save(newCategory));

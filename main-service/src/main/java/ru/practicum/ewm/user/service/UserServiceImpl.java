@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
     public UserDto addUserAdmin(NewUserRequest newUserRequest) {
         User user = UserMapper.toUser(newUserRequest);
         UserDto userDto;
-        if (userRepository.existsByEmail(newUserRequest.getEmail())) {
+        if (userRepository.findByEmail(newUserRequest.getEmail()).isPresent()) {
             throw new DuplicateNameException("Email already exists");
         }
         return UserMapper.toUserDto(userRepository.save(user));

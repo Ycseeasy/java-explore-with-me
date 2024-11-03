@@ -9,13 +9,13 @@ import ru.practicum.ewm.location.model.Location;
 @Data
 @Builder
 public class UpdateEventUserRequest {
-    @Size(min = 20, max = 2000)
+    @Size(min = 20, max = 2001)
     private String annotation;
 
     @Positive
     private Long category;
 
-    @Size(min = 20, max = 7000)
+    @Size(min = 20, max = 7001)
     private String description;
 
     private String eventDate;
