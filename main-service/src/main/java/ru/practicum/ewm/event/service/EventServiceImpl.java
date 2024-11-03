@@ -610,6 +610,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto getEventByIdAndStatsPublic(HttpServletRequest request, Long eventId) {
         Event event = eventRepository.getEventByIdAndState(eventId, State.PUBLISHED);
+
         if (event == null) {
             throw new NotFoundException("Event with ID " + eventId + " not found");
         }
@@ -618,11 +619,10 @@ public class EventServiceImpl implements EventService {
         List<String> uris = Collections.singletonList(request.getRequestURI());
 
         ResponseEntity<List<ViewStats>> response = statsClient.getStats(timeStart, timeNow, uris, true);
-        List<ViewStats> resp;
-        if (response.hasBody()) {
-            resp = response.getBody();
-        } else {
-            resp = Collections.emptyList();
+
+        List<ViewStats> resp = response.hasBody() ? response.getBody() : Collections.emptyList();
+
+        if (resp.isEmpty()) {
             event.setViews(event.getViews() + 1);
             eventRepository.save(event);
         }
