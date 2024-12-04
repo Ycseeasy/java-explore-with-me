@@ -1,9 +1,12 @@
 package ru.practicum.ewm.event.dto;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import ru.practicum.ewm.event.model.StateAction;
 import ru.practicum.ewm.location.model.Location;
 
 @Data
@@ -33,7 +36,8 @@ public class UpdateEventAdminRequest {
 
     private Boolean requestModeration;
 
-    private String stateAction;
+    @Enumerated(EnumType.STRING)
+    private StateAction stateAction;
 
     @Size(min = 3, message = "title size must be more 3 characters")
     @Size(max = 120, message = "title size must be less 120 characters")

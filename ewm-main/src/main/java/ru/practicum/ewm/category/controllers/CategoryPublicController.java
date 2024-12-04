@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controllers.publ;
+package ru.practicum.ewm.category.controllers;
 
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;

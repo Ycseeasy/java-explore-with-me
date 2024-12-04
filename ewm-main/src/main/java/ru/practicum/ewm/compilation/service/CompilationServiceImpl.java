@@ -71,20 +71,18 @@ public class CompilationServiceImpl implements CompilationService {
         }
 
         Compilation compilation = CompilationMapper.toCompilation(newCompilationDto, listEvent);
-        CompilationDto compilationDto;
-        try {
-            compilationDto = CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
-        } catch (DataIntegrityViolationException e) {
-            throw new DuplicateNameException("Compilation name already exist");
+
+        if (compilationRepository.existsById(compilation.getId())) {
+            throw new DuplicateNameException("Compilation already exist");
         }
-        return compilationDto;
+        return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
     }
 
 
     @Transactional
     @Override
     public void deleteCompilationByIdAdmin(Long compId) {
-        if (compilationRepository.findById(compId).isEmpty()) {
+        if (!compilationRepository.existsById(compId)) {
             throw new NotFoundException("Compilation with ID " + compId + "not found");
         }
         compilationRepository.removeCompilationById(compId);
@@ -95,18 +93,17 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public CompilationDto updateCompilationByIdAdmin(Long compId, UpdateCompilationRequest updateCompilationRequest) {
         Optional<Compilation> oldCompilation = compilationRepository.findById(compId);
-        if (oldCompilation.isEmpty()) {
-            throw new NotFoundException("Compilation with ID " + compId + "not found");
-        } else {
-            Set<Event> listEvent = new HashSet<>();
+            Set<Event> setEvent = new HashSet<>();
             if (updateCompilationRequest.getEvents() != null) {
-                listEvent = eventRepository.getEventsByIdIn(updateCompilationRequest.getEvents());
+                setEvent = eventRepository.getEventsByIdIn(updateCompilationRequest.getEvents());
             }
-            Compilation compilation = CompilationMapper.toCompilation(updateCompilationRequest, listEvent);
+            Compilation compilation = CompilationMapper.toCompilation(updateCompilationRequest, setEvent);
             compilation.setTitle(updateCompilationRequest
-                    .getTitle() == null ? oldCompilation.get().getTitle() : updateCompilationRequest.getTitle());
+                    .getTitle() == null ? oldCompilation
+                    .orElseThrow(() -> new NotFoundException("Compilation with ID " + compId + "not found"))
+                    .getTitle() : updateCompilationRequest.getTitle());
             compilation.setId(compId);
             return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
         }
     }
-}
+

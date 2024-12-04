@@ -59,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException("Category with ID " + catId + " not found");
         }
-        if (eventRepository.findFirstByCategoryId(catId) != null) {
+        if (eventRepository.existsById(catId)) {
             throw new ValidationExceptionFindCategory("Category with ID " + catId + " not empty");
         }
         categoryRepository.deleteById(catId);
@@ -84,10 +84,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto getCategoryByIdPublic(Long catId) {
         Optional<Category> result = categoryRepository.findById(catId);
-        if (result.isPresent()) {
-            return CategoryMapper.toCategoryDto(result.get());
-        } else {
-            throw new NotFoundException("Category with ID " + catId + " not found");
-        }
+        return CategoryMapper.toCategoryDto(result
+                .orElseThrow(() -> new NotFoundException("Category with ID " + catId + " not found")));
     }
 }

@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controllers.priv;
+package ru.practicum.ewm.event.controllers;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

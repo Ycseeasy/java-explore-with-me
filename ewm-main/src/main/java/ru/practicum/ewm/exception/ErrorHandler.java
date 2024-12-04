@@ -26,7 +26,7 @@ public class ErrorHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleIllegalArgumentException(IllegalArgumentException ex) throws IOException {
-        return buildApiError(Collections.singletonList(getStackTraceAsString(ex)), HttpStatus.BAD_REQUEST, "Некорректный запрос", ex.getLocalizedMessage());
+        return buildApiError(List.of(), HttpStatus.BAD_REQUEST, "Некорректный запрос", ex.getLocalizedMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

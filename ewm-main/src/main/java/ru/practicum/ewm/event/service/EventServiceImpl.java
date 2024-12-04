@@ -20,6 +20,7 @@ import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.State;
+import ru.practicum.ewm.event.model.StateAction;
 import ru.practicum.ewm.event.model.Status;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.*;
@@ -111,11 +112,11 @@ public class EventServiceImpl implements EventService {
         }
         Event upEvent = oldEvent;
         if (updateEventUserRequest.getStateAction() != null) {
-            if (updateEventUserRequest.getStateAction().equals("SEND_TO_REVIEW")) {
+            if (updateEventUserRequest.getStateAction().equals(StateAction.SEND_TO_REVIEW)) {
                 upEvent = EventMapper.toEvent(updateEventUserRequest, oldEvent, newCategory);
                 upEvent.setState(State.PENDING);
             }
-            if (updateEventUserRequest.getStateAction().equals("CANCEL_REVIEW")) {
+            if (updateEventUserRequest.getStateAction().equals(StateAction.CANCEL_REVIEW)) {
                 upEvent.setState(State.CANCELED);
 
             }
@@ -129,7 +130,7 @@ public class EventServiceImpl implements EventService {
     private void validateUpdateEventPrivate(@NotNull(message = "Event not found") Event oldEvent,
                                             UpdateEventUserRequest updateEventUserRequest) {
 
-        if (oldEvent.getState() != null && oldEvent.getState().equals(State.PUBLISHED)) {
+        if (oldEvent.getState() == State.PUBLISHED) {
             throw new StateArgumentException("Event with state PENDING or CANCELED can be changed. This Event state is "
                     + oldEvent.getState());
         }
@@ -194,7 +195,7 @@ public class EventServiceImpl implements EventService {
         Pageable pageable = PageRequest.of(pageNumber, size);
 
 
-        List<State> stateEnum = (states != null) ? states.stream().map(State::valueOf).collect(Collectors.toList()) : null;
+        List<State> stateEnum = (states != null) ? states.stream().map(State::valueOf).collect(Collectors.toList()) : List.of();
 
 
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
@@ -263,12 +264,12 @@ public class EventServiceImpl implements EventService {
 
         Event upEvent = oldEvent;
         if (updateEventAdminRequest.getStateAction() != null) {
-            if (updateEventAdminRequest.getStateAction().equals("PUBLISH_EVENT")) {
+            if (updateEventAdminRequest.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
                 upEvent = EventMapper.toEvent(updateEventAdminRequest, oldEvent, newCategory);
                 upEvent.setPublishedOn(LocalDateTime.now());
                 upEvent.setState(State.PUBLISHED);
             }
-            if (updateEventAdminRequest.getStateAction().equals("REJECT_EVENT")) {
+            if (updateEventAdminRequest.getStateAction().equals(StateAction.REJECT_EVENT)) {
                 upEvent.setState(State.CANCELED);
 
             }
@@ -298,12 +299,12 @@ public class EventServiceImpl implements EventService {
         }
 
         if (oldEvent.getState() != null && !oldEvent.getState().equals(State.PENDING)
-                && updateEventAdminRequest.getStateAction().equals("PUBLISH_EVENT")) {
+                && updateEventAdminRequest.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
             throw new StateArgumentException("Cannot publish the event because it's not in the right state:" +
                     " PUBLISHED OR CANCELED");
         }
         if (oldEvent.getState() != null && oldEvent.getState().equals(State.PUBLISHED)
-                && updateEventAdminRequest.getStateAction().equals("REJECT_EVENT")) {
+                && updateEventAdminRequest.getStateAction().equals(StateAction.REJECT_EVENT)) {
             throw new StateArgumentException("Cannot reject the event because it's not in the right state: PUBLISHED");
         }
     }
@@ -629,9 +630,10 @@ public class EventServiceImpl implements EventService {
                 event.setViews((long) resp.size());
             }
         }
+
+        String ms = "main-service";
         EndpointHitDto endpointHitDto = EndpointHitDto.builder()
-                .id(null)
-                .app("main-service")
+                .app(ms)
                 .uri(request.getRequestURI())
                 .ip(request.getRemoteAddr())
                 .timestamp(timeNow.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))

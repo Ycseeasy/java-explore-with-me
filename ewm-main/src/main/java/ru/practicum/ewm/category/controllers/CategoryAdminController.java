@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controllers.admin;
+package ru.practicum.ewm.category.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
