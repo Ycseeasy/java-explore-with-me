@@ -191,23 +191,28 @@ public class EventServiceImpl implements EventService {
                                              LocalDateTime rangeEnd,
                                              Integer from, Integer size) {
 
-        int pageNumber = from / size;
-        Pageable pageable = PageRequest.of(pageNumber, size);
-
-
-        List<State> stateEnum = (states != null) ? states.stream().map(State::valueOf).collect(Collectors.toList()) : List.of();
-
-
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             throw new IllegalArgumentException("Start date " + rangeStart
                     + " cannot be later than end date " + rangeEnd);
         }
 
+        int pageNumber = from / size;
+        Pageable pageable = PageRequest.of(pageNumber, size);
 
-        Specification<Event> specification = buildSpecification(users, stateEnum, categories, rangeStart, rangeEnd);
+        Specification<Event> specification = null;
 
+        if (states != null) {
+            List<State> stateEnum = states
+                    .stream()
+                    .map(State::valueOf)
+                    .collect(Collectors.toList());
+            specification = buildSpecification(users, stateEnum, categories, rangeStart, rangeEnd);
+        } else {
+            specification = buildSpecification(users, null, categories, rangeStart, rangeEnd);
+        }
 
-        return eventRepository.findAll(specification, pageable).stream()
+        return eventRepository.findAll(specification, pageable)
+                .stream()
                 .map(EventMapper::toEventFullDto)
                 .collect(Collectors.toList());
     }
@@ -626,7 +631,7 @@ public class EventServiceImpl implements EventService {
             if (event.getViews() == null || event.getViews() == 0) {
                 event.setViews(1L);
                 eventRepository.save(event);
-        } else {
+            } else {
                 event.setViews((long) resp.size());
             }
         }

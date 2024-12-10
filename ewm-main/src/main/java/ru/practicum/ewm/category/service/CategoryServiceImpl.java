@@ -59,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException("Category with ID " + catId + " not found");
         }
-        if (eventRepository.existsById(catId)) {
+        if (!eventRepository.getEventsByCategoryId(catId).isEmpty()) {
             throw new ValidationExceptionFindCategory("Category with ID " + catId + " not empty");
         }
         categoryRepository.deleteById(catId);

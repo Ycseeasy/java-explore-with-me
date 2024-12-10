@@ -27,13 +27,23 @@ public class EventAdminController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventFullDto> getEventsAdmin(HttpServletRequest request, @RequestParam(required = false) List<Long> users, @RequestParam(required = false) List<String> states, @RequestParam(required = false) List<Long> categories, @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart, @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd, @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from, @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+    public List<EventFullDto> getEventsAdmin(HttpServletRequest request,
+                                             @RequestParam(required = false) List<Long> users,
+                                             @RequestParam(required = false) List<String> states,
+                                             @RequestParam(required = false) List<Long> categories,
+                                             @RequestParam(required = false)
+                                             @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+                                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+                                             @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                             @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
         return eventService.getEventsAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
     }
 
 
     @PatchMapping("/{eventId}")
-    public EventFullDto updateEventAdmin(HttpServletRequest request, @NotNull @PathVariable(required = false) Long eventId, @NotNull @Valid @RequestBody UpdateEventAdminRequest updateEventAdminRequest) {
+    public EventFullDto updateEventAdmin(HttpServletRequest request,
+                                         @NotNull @PathVariable(required = false) Long eventId,
+                                         @NotNull @Valid @RequestBody UpdateEventAdminRequest updateEventAdminRequest) {
         return eventService.updateEventAdmin(eventId, updateEventAdminRequest);
     }
 }

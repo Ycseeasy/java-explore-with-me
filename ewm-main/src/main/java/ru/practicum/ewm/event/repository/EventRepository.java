@@ -15,8 +15,6 @@ import java.util.Set;
 public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
     List<Event> getEventsByInitiatorId(Long userId, Pageable pageable);
 
-    Event findFirstByCategoryId(Long catId);
-
     Optional<Event> findByInitiatorIdAndId(Long userId, Long eventId);
 
     Event getEventsById(Long eventId);
@@ -26,6 +24,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     List<Event> getEventsByInitiatorId(Long userId);
 
     Event getEventByIdAndState(Long eventId, State state);
+
+    List<Event> getEventsByCategoryId(Long catId);
 
     @Query(value = "select * from events as e " + "where e.state=?1 " + "and e.category_id in ?2 " + "and e.participant_limit = 0 or e.participant_limit > e.confirmed_requests " + "and e.event_date > ?3 " + "and upper(e.annotation) like upper(?4) or upper(e.description) like upper(?4) " + "order by e.event_date desc ", nativeQuery = true)
     List<Event> getEventsNoPeriodSortEventDateAvailableCategoryText(String state, List<Long> category, LocalDateTime time, String text, Pageable pageable);

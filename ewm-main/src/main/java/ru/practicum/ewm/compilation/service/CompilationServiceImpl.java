@@ -71,7 +71,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         Compilation compilation = CompilationMapper.toCompilation(newCompilationDto, listEvent);
 
-        if (compilationRepository.existsById(compilation.getId())) {
+        if (compilation.getId() != null && compilationRepository.existsById(compilation.getId())) {
             throw new DuplicateNameException("Compilation already exist");
         }
         return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
@@ -92,17 +92,17 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public CompilationDto updateCompilationByIdAdmin(Long compId, UpdateCompilationRequest updateCompilationRequest) {
         Optional<Compilation> oldCompilation = compilationRepository.findById(compId);
-            Set<Event> setEvent = new HashSet<>();
-            if (updateCompilationRequest.getEvents() != null) {
-                setEvent = eventRepository.getEventsByIdIn(updateCompilationRequest.getEvents());
-            }
-            Compilation compilation = CompilationMapper.toCompilation(updateCompilationRequest, setEvent);
-            compilation.setTitle(updateCompilationRequest
-                    .getTitle() == null ? oldCompilation
-                    .orElseThrow(() -> new NotFoundException("Compilation with ID " + compId + "not found"))
-                    .getTitle() : updateCompilationRequest.getTitle());
-            compilation.setId(compId);
-            return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
+        Set<Event> setEvent = new HashSet<>();
+        if (updateCompilationRequest.getEvents() != null) {
+            setEvent = eventRepository.getEventsByIdIn(updateCompilationRequest.getEvents());
         }
+        Compilation compilation = CompilationMapper.toCompilation(updateCompilationRequest, setEvent);
+        compilation.setTitle(updateCompilationRequest
+                .getTitle() == null ? oldCompilation
+                .orElseThrow(() -> new NotFoundException("Compilation with ID " + compId + "not found"))
+                .getTitle() : updateCompilationRequest.getTitle());
+        compilation.setId(compId);
+        return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
     }
+}
 
