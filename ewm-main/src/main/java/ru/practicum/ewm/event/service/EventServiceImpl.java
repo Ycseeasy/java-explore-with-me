@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -198,7 +200,6 @@ public class EventServiceImpl implements EventService {
 
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
-
         Specification<Event> specification = null;
 
         if (states != null) {
@@ -206,9 +207,9 @@ public class EventServiceImpl implements EventService {
                     .stream()
                     .map(State::valueOf)
                     .collect(Collectors.toList());
-            specification = buildSpecification(users, stateEnum, categories, rangeStart, rangeEnd);
+            specification = buildSpecificationAdmin(users, stateEnum, categories, rangeStart, rangeEnd);
         } else {
-            specification = buildSpecification(users, null, categories, rangeStart, rangeEnd);
+            specification = buildSpecificationAdmin(users, null, categories, rangeStart, rangeEnd);
         }
 
         return eventRepository.findAll(specification, pageable)
@@ -217,15 +218,14 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
-    private Specification<Event> buildSpecification(List<Long> users,
-                                                    List<State> states,
-                                                    List<Long> categories,
-                                                    LocalDateTime start,
-                                                    LocalDateTime end) {
+    private Specification<Event> buildSpecificationAdmin(List<Long> users,
+                                                         List<State> states,
+                                                         List<Long> categories,
+                                                         LocalDateTime start,
+                                                         LocalDateTime end) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Добавляем условия фильтрации, если параметры заданы
             if (users != null) {
                 predicates.add(root.get("initiator").get("id").in(users));
             }
@@ -241,6 +241,7 @@ public class EventServiceImpl implements EventService {
             if (end != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("eventDate"), end));
             }
+
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
@@ -324,43 +325,20 @@ public class EventServiceImpl implements EventService {
                                                        LocalDateTime rangeEnd,
                                                        Boolean onlyAvailable,
                                                        String sort, Integer from, Integer size) {
-        int pageNumber = from / size;
-        Pageable pageable = PageRequest.of(pageNumber, size);
-        LocalDateTime timeNow = LocalDateTime.now();
 
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             throw new IllegalArgumentException("Time start " + rangeStart + " after end " + rangeEnd);
         }
 
-
+        int pageNumber = from / size;
+        Pageable pageable = PageRequest.of(pageNumber, size);
+        LocalDateTime timeNow = LocalDateTime.now();
         String textPattern = (text != null) ? "%" + text + "%" : null;
-
-        List<Event> list;
-
-
-        if (rangeStart == null && rangeEnd == null) {
-            list = fetchEventsNoPeriod(State.PUBLISHED.toString(),
-                    categories,
-                    paid,
-                    textPattern,
-                    timeNow,
-                    onlyAvailable,
-                    sort,
-                    pageable);
-        } else {
-            list = fetchEventsWithPeriod(State.PUBLISHED.toString(),
-                    categories,
-                    paid,
-                    textPattern,
-                    rangeStart,
-                    rangeEnd,
-                    onlyAvailable,
-                    sort,
-                    pageable);
-        }
+        Sort sortByEventDate = Sort.by(Sort.Direction.DESC, "eventDate");
+        Sort sortByViews = Sort.by(Sort.Direction.DESC, "views");
+        PageRequest pageRequest;
 
         EndpointHitDto endpointHitDto = EndpointHitDto.builder()
-                .id(null)
                 .app("main-service")
                 .uri(request.getRequestURI())
                 .ip(request.getRemoteAddr())
@@ -373,243 +351,67 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException(e.getLocalizedMessage());
         }
 
-        if (list.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return list.stream().map(EventMapper::toEventShortDto).collect(Collectors.toList());
-    }
-
-
-    private List<Event> fetchEventsNoPeriod(String state,
-                                            List<Long> categories,
-                                            Boolean paid,
-                                            String text,
-                                            LocalDateTime timeNow,
-                                            Boolean onlyAvailable,
-                                            String sort, Pageable pageable) {
-        if ("EVENT_DATE".equals(sort)) {
-            return onlyAvailable ? fetchSortedByEventDateAvailableNoPeriod(state, categories, paid, text, timeNow, pageable) : fetchSortedByEventDateNoPeriod(state, categories, paid, text, timeNow, pageable);
-        } else if ("VIEWS".equals(sort)) {
-            return onlyAvailable ? fetchSortedByViewsAvailableNoPeriod(state, categories, paid, text, timeNow, pageable) : fetchSortedByViewsNoPeriod(state, categories, paid, text, timeNow, pageable);
+        Specification<Event> specification = buildSpecificationPublic(onlyAvailable, categories,
+                textPattern, LocalDateTime.now(), rangeStart, rangeEnd);
+        if (sort == null) {
+            return eventRepository.findAll(specification, pageable)
+                    .stream()
+                    .map(EventMapper::toEventShortDto)
+                    .collect(Collectors.toList());
+        } else if (sort.equals("EVENT_DATE")) {
+            pageRequest = PageRequest.of(pageNumber, size, sortByEventDate);
+            return eventRepository.findAll(specification, pageRequest)
+                    .stream()
+                    .map(EventMapper::toEventShortDto)
+                    .collect(Collectors.toList());
+        } else if (sort.equals("VIEWS")) {
+            pageRequest = PageRequest.of(pageNumber, size, sortByViews);
+            return eventRepository.findAll(specification, pageRequest)
+                    .stream()
+                    .map(EventMapper::toEventShortDto)
+                    .collect(Collectors.toList());
         } else {
-            return onlyAvailable ? fetchAvailableNoPeriod(state, categories, paid, text, timeNow, pageable) : fetchDefaultNoPeriod(state, categories, paid, text, timeNow, pageable);
+            return eventRepository.findAll(specification, pageable)
+                    .stream()
+                    .map(EventMapper::toEventShortDto)
+                    .collect(Collectors.toList());
         }
     }
 
+    private Specification<Event> buildSpecificationPublic(Boolean onlyAvailable,
+                                                          List<Long> categories,
+                                                          String text,
+                                                          LocalDateTime timeNow,
+                                                          LocalDateTime rangeStart,
+                                                          LocalDateTime rangeEnd) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("state"), State.PUBLISHED.toString()));
 
-    private List<Event> fetchSortedByEventDateAvailableNoPeriod(String state,
-                                                                List<Long> categories,
-                                                                Boolean paid,
-                                                                String text,
-                                                                LocalDateTime timeNow,
-                                                                Pageable pageable) {
-        if (categories != null && text != null) {
-            return eventRepository.getEventsNoPeriodSortEventDateAvailableCategoryText(state, categories, timeNow, text, pageable);
-        } else if (text == null && categories != null) {
-            return eventRepository.getEventsNoPeriodSortEventDateAvailableCategory(state, categories, timeNow, pageable);
-        } else if (text != null) {
-            return eventRepository.getEventsNoPeriodSortEventDateAvailableText(state, timeNow, text, pageable);
-        } else {
-            return eventRepository.getEventsNoPeriodSortEventDateAvailable(state, timeNow, pageable);
-        }
-    }
-
-    private List<Event> fetchSortedByEventDateNoPeriod(String state,
-                                                       List<Long> categories,
-                                                       Boolean paid,
-                                                       String text,
-                                                       LocalDateTime timeNow,
-                                                       Pageable pageable) {
-        if (categories != null && text != null) {
-            return eventRepository.getEventsNoPeriodSortEventDateCategoryText(state, categories, timeNow, text, pageable);
-        } else if (text == null && categories != null) {
-            return eventRepository.getEventsNoPeriodSortEventDateCategory(state, categories, timeNow, pageable);
-        } else if (text != null) {
-            return eventRepository.getEventsNoPeriodSortEventDateText(state, timeNow, text, pageable);
-        } else {
-            return eventRepository.getEventsNoPeriodSortEventDate(state, timeNow, pageable);
-        }
-    }
-
-    private List<Event> fetchSortedByViewsAvailableNoPeriod(String state,
-                                                            List<Long> categories,
-                                                            Boolean paid,
-                                                            String text,
-                                                            LocalDateTime timeNow,
-                                                            Pageable pageable) {
-        if (categories != null && text != null) {
-            return eventRepository.getEventsNoPeriodSortViewsAvailableCategoryText(state, categories, timeNow, text, pageable);
-        } else if (categories != null) {
-            return eventRepository.getEventsNoPeriodSortViewsAvailableCategory(state, categories, timeNow, pageable);
-        } else if (text != null) {
-            return eventRepository.getEventsNoPeriodSortViewsAvailableText(state, timeNow, text, pageable);
-        } else {
-            return eventRepository.getEventsNoPeriodSortViewsAvailable(state, timeNow, pageable);
-        }
-    }
-
-    private List<Event> fetchSortedByViewsNoPeriod(String state,
-                                                   List<Long> categories,
-                                                   Boolean paid,
-                                                   String text,
-                                                   LocalDateTime timeNow,
-                                                   Pageable pageable) {
-        if (categories != null && text != null) {
-            return eventRepository.getEventsNoPeriodSortViewsCategoryText(state, categories, timeNow, text, pageable);
-        } else if (categories != null) {
-            return eventRepository.getEventsNoPeriodSortViewsCategory(state, categories, timeNow, pageable);
-        } else if (text != null) {
-            return eventRepository.getEventsNoPeriodSortViewsText(state, timeNow, text, pageable);
-        } else {
-            return eventRepository.getEventsNoPeriodSortViews(state, timeNow, pageable);
-        }
-    }
-
-    private List<Event> fetchAvailableNoPeriod(String state,
-                                               List<Long> categories,
-                                               Boolean paid,
-                                               String text,
-                                               LocalDateTime timeNow,
-                                               Pageable pageable) {
-        if (categories != null && text != null) {
-            return eventRepository.getEventsNoPeriodAvailableCategoryText(state, categories, timeNow, text, pageable);
-        } else if (categories != null) {
-            return eventRepository.getEventsNoPeriodAvailableCategory(state, categories, timeNow, pageable);
-        } else if (text != null) {
-            return eventRepository.getEventsNoPeriodAvailableText(state, timeNow, text, pageable);
-        } else {
-            return eventRepository.getEventsNoPeriodAvailable(state, timeNow, pageable);
-        }
-    }
-
-    private List<Event> fetchDefaultNoPeriod(String state,
-                                             List<Long> categories,
-                                             Boolean paid,
-                                             String text,
-                                             LocalDateTime timeNow,
-                                             Pageable pageable) {
-        if (categories != null && text != null) {
-            return eventRepository.getEventsNoPeriodCategoryText(state, categories, timeNow, text, pageable);
-        } else if (categories != null) {
-            return eventRepository.getEventsNoPeriodCategory(state, categories, timeNow, pageable);
-        } else if (text != null) {
-            return eventRepository.getEventsNoPeriodText(state, timeNow, text, pageable);
-        } else {
-            return eventRepository.getEventsNoPeriod(state, timeNow, pageable);
-        }
-    }
-
-
-    private List<Event> fetchEventsWithPeriod(String state,
-                                              List<Long> categories,
-                                              Boolean paid,
-                                              String text,
-                                              LocalDateTime rangeStart,
-                                              LocalDateTime rangeEnd,
-                                              Boolean onlyAvailable,
-                                              String sort,
-                                              Pageable pageable) {
-        if ("EVENT_DATE".equals(sort)) {
-            return fetchSortedByEventDateWithPeriod(state, categories, text, rangeStart, rangeEnd, onlyAvailable, pageable);
-        } else if ("VIEWS".equals(sort)) {
-            return fetchSortedByViewsWithPeriod(state, categories, text, rangeStart, rangeEnd, onlyAvailable, pageable);
-        } else {
-            return fetchDefaultWithPeriod(state, categories, text, rangeStart, rangeEnd, onlyAvailable, pageable);
-        }
-    }
-
-
-    private List<Event> fetchSortedByEventDateWithPeriod(String state,
-                                                         List<Long> categories,
-                                                         String text,
-                                                         LocalDateTime rangeStart,
-                                                         LocalDateTime rangeEnd,
-                                                         Boolean onlyAvailable,
-                                                         Pageable pageable) {
-        if (onlyAvailable) {
-            if (categories != null && text != null) {
-                return eventRepository.getEventsPeriodSortEventDateAvailableCategoryText(state, categories, rangeStart, rangeEnd, text, pageable);
-            } else if (categories != null) {
-                return eventRepository.getEventsPeriodSortEventDateAvailableCategory(state, categories, rangeStart, rangeEnd, pageable);
-            } else if (text != null) {
-                return eventRepository.getEventsPeriodSortEventDateAvailableText(state, rangeStart, rangeEnd, text, pageable);
-            } else {
-                return eventRepository.getEventsPeriodSortEventDateAvailable(state, rangeStart, rangeEnd, pageable);
+            if (onlyAvailable != null && onlyAvailable) {
+                Predicate participantLimitIsNull = criteriaBuilder.isNull(root.get("participant_limit"));
+                Predicate participantLimitAvailable = criteriaBuilder.greaterThan(root.get("participant_limit"),
+                        root.get("confirmed_requests"));
+                predicates.add(criteriaBuilder.or(participantLimitIsNull, participantLimitAvailable));
             }
-        } else {
-            if (categories != null && text != null) {
-                return eventRepository.getEventsPeriodSortEventDateCategoryText(state, categories, rangeStart, rangeEnd, text, pageable);
-            } else if (categories != null) {
-                return eventRepository.getEventsPeriodSortEventDateCategory(state, categories, rangeStart, rangeEnd, pageable);
-            } else if (text != null) {
-                return eventRepository.getEventsPeriodSortEventDateText(state, rangeStart, rangeEnd, text, pageable);
-            } else {
-                return eventRepository.getEventsPeriodSortEventDate(state, rangeStart, rangeEnd, pageable);
+            if (categories != null && !categories.isEmpty()) {
+                predicates.add(root.get("category").get("id").in(categories));
             }
-        }
-    }
 
+            if (rangeStart != null && rangeEnd != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("eventDate"), rangeStart));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
+            } else {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("eventDate"), timeNow));
+            }
 
-    private List<Event> fetchSortedByViewsWithPeriod(String state,
-                                                     List<Long> categories,
-                                                     String text,
-                                                     LocalDateTime rangeStart,
-                                                     LocalDateTime rangeEnd,
-                                                     Boolean onlyAvailable,
-                                                     Pageable pageable) {
-        if (onlyAvailable) {
-            if (categories != null && text != null) {
-                return eventRepository.getEventsPeriodSortViewsAvailableCategoryText(state, categories, rangeStart, rangeEnd, text, pageable);
-            } else if (categories != null) {
-                return eventRepository.getEventsPeriodSortViewsAvailableCategory(state, categories, rangeStart, rangeEnd, pageable);
-            } else if (text != null) {
-                return eventRepository.getEventsPeriodSortViewsAvailableText(state, rangeStart, rangeEnd, text, pageable);
-            } else {
-                return eventRepository.getEventsPeriodSortViewsAvailable(state, rangeStart, rangeEnd, pageable);
+            if (text != null) {
+                Predicate annotation = criteriaBuilder.like(root.get("annotation"), text);
+                Predicate description = criteriaBuilder.like(root.get("description"), text);
+                predicates.add(criteriaBuilder.or(annotation, description));
             }
-        } else {
-            if (categories != null && text != null) {
-                return eventRepository.getEventsPeriodSortViewsCategoryText(state, categories, rangeStart, rangeEnd, text, pageable);
-            } else if (categories != null) {
-                return eventRepository.getEventsPeriodSortViewsCategory(state, categories, rangeStart, rangeEnd, pageable);
-            } else if (text != null) {
-                return eventRepository.getEventsPeriodSortViewsText(state, rangeStart, rangeEnd, text, pageable);
-            } else {
-                return eventRepository.getEventsPeriodSortViews(state, rangeStart, rangeEnd, pageable);
-            }
-        }
-    }
-
-
-    private List<Event> fetchDefaultWithPeriod(String state,
-                                               List<Long> categories,
-                                               String text,
-                                               LocalDateTime rangeStart,
-                                               LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable,
-                                               Pageable pageable) {
-        if (onlyAvailable) {
-            if (categories != null && text != null) {
-                return eventRepository.getEventsPeriodAvailableCategoryText(state, categories, rangeStart, rangeEnd, text, pageable);
-            } else if (categories != null) {
-                return eventRepository.getEventsPeriodAvailableCategory(state, categories, rangeStart, rangeEnd, pageable);
-            } else if (text != null) {
-                return eventRepository.getEventsPeriodAvailableText(state, rangeStart, rangeEnd, text, pageable);
-            } else {
-                return eventRepository.getEventsPeriodAvailable(state, rangeStart, rangeEnd, pageable);
-            }
-        } else {
-            if (categories != null && text != null) {
-                return eventRepository.getEventsPeriodCategoryText(state, categories, rangeStart, rangeEnd, text, pageable);
-            } else if (categories != null) {
-                return eventRepository.getEventsPeriodCategory(state, categories, rangeStart, rangeEnd, pageable);
-            } else if (text != null) {
-                return eventRepository.getEventsPeriodText(state, rangeStart, rangeEnd, text, pageable);
-            } else {
-                return eventRepository.getEventsPeriod(state, rangeStart, rangeEnd, pageable);
-            }
-        }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     @Transactional
