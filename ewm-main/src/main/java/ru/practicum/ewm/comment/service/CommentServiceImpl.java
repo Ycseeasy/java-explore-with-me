@@ -35,7 +35,6 @@ public class CommentServiceImpl implements CommentService {
         Event event = eventRepository.getEventsById(eventId);
         User user = userRepository.getUserById(commentDto.getAuthor());
         Comment comment = CommentMapper.toComment(commentDto, user, event);
-        System.out.println("comment:" + comment);
         return CommentMapper.toCommentDto(commentRepository.save(comment));
     }
 
@@ -63,7 +62,6 @@ public class CommentServiceImpl implements CommentService {
         upComment.setId(oldComment.getId());
         upComment.setText((upComment.getText() == null || upComment.getText().isBlank()) ? oldComment.getText() : upComment.getText());
         upComment.setCreated(upComment.getCreated() == null ? oldComment.getCreated() : upComment.getCreated());
-        System.out.println("upComment:"+ upComment);
         return CommentMapper.toCommentDto(commentRepository.save(upComment));
     }
 
@@ -105,7 +103,6 @@ public class CommentServiceImpl implements CommentService {
 
         newComment.setId(oldComment.getId());
         newComment.setCreated(newComment.getCreated() == null ? oldComment.getCreated() : newComment.getCreated());
-        System.out.println("newComment:"+ newComment);
         return CommentMapper.toCommentDto(commentRepository.save(newComment));
     }
 
